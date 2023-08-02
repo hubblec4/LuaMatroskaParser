@@ -229,7 +229,14 @@ function Matroska_Parser:_analyze()
     return true, ""
 end
 
-
+-- bin2hex (private) - converts binary data to a hex-string
+function Matroska_Parser:_bin2hex(bin)
+    local hex = "0x"
+    for i = 1, #bin do
+        hex = hex .. string.format("%02X", string.byte(bin, i))
+    end
+    return hex
+end
 
 
 -- Matroska features -----------------------------------------------------------
@@ -245,14 +252,14 @@ function Matroska_Parser:hardlinking_is_used()
 
     -- check the UIDs
     local seg_id = self.Info:find_child(mk.info.SegmentUUID)
-    if seg_id then seg_id = seg_id.value end
+    if seg_id then seg_id = self:_bin2hex(seg_id.value) end
     -- note: Hard-Linking will also work if there is no SegmentUUID
 
     local prev_id = self.Info:find_child(mk.info.PrevUUID)
-    if prev_id then prev_id = prev_id.value end
+    if prev_id then prev_id = self:_bin2hex(prev_id.value) end
     
     local next_id = self.Info:find_child(mk.info.NextUUID)
-    if next_id then next_id = next_id.value end
+    if next_id then next_id = self:_bin2hex(next_id.value) end
 
     -- no prev or next UID -> no Hard-Linking
     if prev_id == nil and next_id == nil then return false end
@@ -286,14 +293,14 @@ end
 function Matroska_Parser:hardlinking_get_uids()
     -- check the UIDs
     local seg_id = self.Info:find_child(mk.info.SegmentUUID)
-    if seg_id then seg_id = seg_id.value end
+    if seg_id then seg_id = self:_bin2hex(seg_id.value) end
     -- note: Hard-Linking will also work if there is no SegmentUUID
 
     local prev_id = self.Info:find_child(mk.info.PrevUUID)
-    if prev_id then prev_id = prev_id.value end
+    if prev_id then prev_id = self:_bin2hex(prev_id.value) end
     
     local next_id = self.Info:find_child(mk.info.NextUUID)
-    if next_id then next_id = next_id.value end
+    if next_id then next_id = self:_bin2hex(next_id.value) end
 
     return seg_id, prev_id, next_id
 end
