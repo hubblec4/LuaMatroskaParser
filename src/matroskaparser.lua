@@ -54,7 +54,7 @@ function Matroska_Parser:new(file, do_analyze)
 
     -- Analyze, find all Top-Level elements
     -- do_analyze = false: means the user have to analyze manually
-    if do_analyze == nil or do_analyze == true then
+    if self.is_valid and (do_analyze == nil or do_analyze == true) then
         self.is_valid, self.err_msg = self:_analyze()
     end
 
