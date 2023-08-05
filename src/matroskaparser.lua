@@ -16,6 +16,9 @@ local DOCTYPE_WEBM = "webm"
 -- -----------------------------------------------------------------------------
 
 local Matroska_Parser = {
+    -- path: file path
+    path = "",
+
     -- file: a file stream, loaded with "io.open" for example
     file = nil,
 
@@ -43,11 +46,11 @@ local Matroska_Parser = {
 }
 
 -- Matroska Parser constructor
-function Matroska_Parser:new(file, do_analyze)
+function Matroska_Parser:new(path, do_analyze)
     local elem = {}
     setmetatable(elem, self)
     self.__index = self
-    self.file = file
+    self.path = path
 
     -- Validate
     self.is_valid, self.err_msg = self:_validate()
@@ -58,6 +61,8 @@ function Matroska_Parser:new(file, do_analyze)
         self.is_valid, self.err_msg = self:_analyze()
     end
 
+    -- close file if invalid
+    if not self.is_valid then self:close() end
     return elem
 end
 
@@ -77,8 +82,23 @@ function Matroska_Parser:get_element_from_seekhead(elem_class)
     return ebml.find_next_element(self.file, {elem_class}, 0, 0 , false)
 end
 
+-- close: a method to clean some var's
+function Matroska_Parser:close()
+    if self.file ~= nil then
+        self.file:close()
+        self.file = nil
+    end
+end
+
+
 -- Validate (private)
 function Matroska_Parser:_validate()
+    -- open file
+    self.file = io.open(self.path, "rb")
+    if not self.file then
+        return false, "file couldn't be open"
+    end
+
     -- check if an EBML and Segment element is present and a valid DocType is used
     
     -- find EBML element
