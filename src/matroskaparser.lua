@@ -51,6 +51,7 @@ function Matroska_Parser:new(path, do_analyze)
     setmetatable(elem, self)
     self.__index = self
     self.path = path
+    self.file = nil
 
     -- Validate
     self.is_valid, self.err_msg = self:_validate()
