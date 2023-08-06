@@ -315,7 +315,6 @@ function Matroska_Parser:hardlinking_get_uids()
     -- check the UIDs
     local seg_id = self.Info:find_child(mk.info.SegmentUUID)
     if seg_id then seg_id = self:_bin2hex(seg_id.value) end
-    -- note: Hard-Linking will also work if there is no SegmentUUID
 
     local prev_id = self.Info:find_child(mk.info.PrevUUID)
     if prev_id then prev_id = self:_bin2hex(prev_id.value) end
