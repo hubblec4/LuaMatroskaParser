@@ -69,6 +69,7 @@ end
 
 -- Get element from SeekHead
 function Matroska_Parser:get_element_from_seekhead(elem_class)
+    if self.SeekHead == nil then return nil end
     local seek = self.SeekHead:find_first_of(elem_class)
     -- no seek found in the first SeekHead
     if not seek then
@@ -178,7 +179,7 @@ function Matroska_Parser:_analyze()
 
         -- Chapters
         elseif id == mk.chapters.Chapters:get_context().id  then
-            elem:skip_data(self.file) -- skip data, parse later
+            elem:read_data(self.file) -- parse fully
             self.Chapters = elem
 
         -- Tracks
@@ -193,7 +194,7 @@ function Matroska_Parser:_analyze()
 
         -- Tags
         elseif id == mk.tags.Tags:get_context().id  then
-            elem:skip_data(self.file) -- skip data, parse later
+            elem:read_data(self.file) -- parse fully
             self.Tags = elem
 
         -- first Cluster
@@ -224,7 +225,7 @@ function Matroska_Parser:_analyze()
 
     if not self.Info then
         self.Info = self:get_element_from_seekhead(mk.info.Info)
-        self.Info:read_data(self.file)
+        if self.Info then self.Info:read_data(self.file) end
     end
 
     if not self.Attachments then
@@ -233,6 +234,7 @@ function Matroska_Parser:_analyze()
     
     if not self.Chapters then
         self.Chapters = self:get_element_from_seekhead(mk.chapters.Chapters)
+        if self.Chapters then self.Chapters:read_data(self.file) end
     end
 
     if not self.Cues then
@@ -245,6 +247,7 @@ function Matroska_Parser:_analyze()
 
     if not self.Tags then
         self.Tags = self:get_element_from_seekhead(mk.tags.Tags)
+        if self.Tags then self.Tags:read_data(self.file) end
     end
     
     return true, ""
@@ -290,11 +293,6 @@ function Matroska_Parser:hardlinking_is_used()
     if self.Chapters == nil then
         -- if no chapters present -> Hard-Linking is used
         return true, seg_id, prev_id, next_id
-    end
-
-    -- TODO chapter parsing
-    if #self.Chapters.value == 0 then
-        self.Chapters:read_data(self.file)
     end
 
     -- get the default edition and check if ordered chapters are used
