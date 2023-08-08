@@ -118,7 +118,7 @@ function Matroska_Parser:_validate()
 
     -- find Segment, note there can be Void elements before
     local read_size = 0xFFFFFF
-    elem = ebml.find_next_element(self.file, {mk.Segment}, read_size, 0, false)
+    elem = ebml.find_next_element(self.file, {mk.Segment}, read_size, -1, false)
     while elem do
         if elem:get_context().id == mk.Segment:get_context().id then
             self.Segment = elem
@@ -132,7 +132,7 @@ function Matroska_Parser:_validate()
         end
 
         -- find next element
-        elem = ebml.find_next_element(self.file, {mk.Segment}, read_size, 0, false)
+        elem = ebml.find_next_element(self.file, {mk.Segment}, read_size, -1, false)
     end
 
     return false, "Segment element not found."
