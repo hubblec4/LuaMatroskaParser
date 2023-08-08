@@ -275,35 +275,24 @@ function Matroska_Parser:hardlinking_is_used()
     if self.is_webm then return false end
 
     -- check the UIDs
-    local seg_id = self.Info:find_child(mk.info.SegmentUUID)
-    if seg_id then seg_id = self:_bin2hex(seg_id.value) end
-    -- note: Hard-Linking will also work if there is no SegmentUUID
-
-    local prev_id = self.Info:find_child(mk.info.PrevUUID)
-    if prev_id then prev_id = self:_bin2hex(prev_id.value) end
-    
-    local next_id = self.Info:find_child(mk.info.NextUUID)
-    if next_id then next_id = self:_bin2hex(next_id.value) end
+    local seg_id, prev_id, next_id = self:hardlinking_get_uids()
 
     -- no prev or next UID -> no Hard-Linking
     if prev_id == nil and next_id == nil then return false end
 
     -- Ordered Chapters or Soft-Linking overrides Hard-Linking
     -- check the Chapters
-    if self.Chapters == nil then
-        -- if no chapters present -> Hard-Linking is used
-        return true, seg_id, prev_id, next_id
-    end
-
-    -- get the default edition and check if ordered chapters are used
-    local def_edition = self.Chapters:get_default_edition()
-    if def_edition:get_child(mk.chapters.EditionFlagOrdered).value > 0 then
-        if def_edition:find_child(mk.chapters.ChapterAtom) then
-            return false
+    if self.Chapters ~= nil then
+        -- get the default edition and check if ordered chapters are used
+        local def_edition = self.Chapters:get_default_edition()
+        if def_edition:get_child(mk.chapters.EditionFlagOrdered).value > 0 then
+            if def_edition:find_child(mk.chapters.ChapterAtom) then
+                return false
+            end
+            -- no chapter found -> Hard-Linking is used
         end
-        -- no chapter found -> Hard-Linking is used
     end
-
+    
     -- all is checked and Hard-Linking is used
     return true, seg_id, prev_id, next_id
 end
