@@ -300,6 +300,7 @@ end
 -- Hard-Linking get UIDs
 function Matroska_Parser:hardlinking_get_uids()
     -- check the UIDs
+    if self.Info == nil then return end
     local seg_id = self.Info:find_child(mk.info.SegmentUUID)
     if seg_id then seg_id = self:_bin2hex(seg_id.value) end
 
