@@ -50,23 +50,22 @@ local Matroska_Parser = {
 
 -- Matroska Parser constructor
 function Matroska_Parser:new(path, do_analyze)
-    local elem = {}
-    setmetatable(elem, self)
+    local elem = setmetatable({}, self)
     self.__index = self
-    self.path = path
-    self.file = nil
+    elem.path = path
+    elem.file = nil
 
     -- Validate
-    self.is_valid, self.err_msg = self:_validate()
+    elem.is_valid, elem.err_msg = elem:_validate()
 
     -- Analyze, find all Top-Level elements
     -- do_analyze = false: means the user have to analyze manually
-    if self.is_valid and (do_analyze == nil or do_analyze == true) then
-        self.is_valid, self.err_msg = self:_analyze()
+    if elem.is_valid and (do_analyze == nil or do_analyze == true) then
+        elem.is_valid, elem.err_msg = elem:_analyze()
     end
 
     -- close file if invalid
-    if not self.is_valid then self:close() end
+    if not elem.is_valid then elem:close() end
     return elem
 end
 
