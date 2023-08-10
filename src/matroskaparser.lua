@@ -280,6 +280,22 @@ end
 
 -- Matroska features -----------------------------------------------------------
 
+-- Ordered chapters are used
+function Matroska_Parser:ordered_chapters_are_used()
+    if self.Chapters ~= nil then
+        -- get the default edition and check if ordered chapters are used
+        local def_edition = self.Chapters:get_default_edition()
+        if def_edition
+        and def_edition:get_child(mk.chapters.EditionFlagOrdered).value > 0 then
+            if def_edition:find_child(mk.chapters.ChapterAtom) then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+
 -- Hard-Linking is used
 function Matroska_Parser:hardlinking_is_used()
     -- check if the Hard-Linking is used
@@ -297,16 +313,7 @@ function Matroska_Parser:hardlinking_is_used()
 
     -- Ordered Chapters or Soft-Linking overrides Hard-Linking
     -- check the Chapters
-    if self.Chapters ~= nil then
-        -- get the default edition and check if ordered chapters are used
-        local def_edition = self.Chapters:get_default_edition()
-        if def_edition:get_child(mk.chapters.EditionFlagOrdered).value > 0 then
-            if def_edition:find_child(mk.chapters.ChapterAtom) then
-                return false
-            end
-            -- no chapter found -> Hard-Linking is used
-        end
-    end
+    if self:ordered_chapters_are_used() then return false end
     
     -- all is checked and Hard-Linking is used
     return true, seg_id, prev_id, next_id
