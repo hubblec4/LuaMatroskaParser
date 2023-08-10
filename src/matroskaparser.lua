@@ -42,7 +42,10 @@ local Matroska_Parser = {
     Chapters = nil,
     Cues = nil,
     Tracks = nil,
-    Tags = nil
+    Tags = nil,
+
+    -- useful element values
+    seg_uuid = nil -- SegmentUUID as hex-string
 }
 
 -- Matroska Parser constructor
@@ -174,8 +177,8 @@ function Matroska_Parser:_analyze()
 
         -- Info
         elseif id == mk.info.Info:get_context().id  then
-            elem:read_data(self.file) -- parse fully
             self.Info = elem
+            self:parse_Info()
 
         -- Chapters
         elseif id == mk.chapters.Chapters:get_context().id  then
@@ -225,7 +228,7 @@ function Matroska_Parser:_analyze()
 
     if not self.Info then
         self.Info = self:get_element_from_seekhead(mk.info.Info)
-        if self.Info then self.Info:read_data(self.file) end
+        self:parse_Info()
     end
 
     if not self.Attachments then
@@ -260,6 +263,18 @@ function Matroska_Parser:_bin2hex(bin)
         hex = hex .. string.format("%02X", string.byte(bin, i))
     end
     return hex
+end
+
+-- Parse Info (private)
+function Matroska_Parser:parse_Info()
+    if self.Info then
+        self.Info:read_data(self.file) -- parse fully
+        -- parse SegmentUUID
+        self.seg_uuid = self.Info:find_child(mk.info.SegmentUUID)
+        if self.seg_uuid then
+            self.seg_uuid = self:_bin2hex(self.seg_uuid.value)
+        end
+    end
 end
 
 
@@ -301,8 +316,6 @@ end
 function Matroska_Parser:hardlinking_get_uids()
     -- check the UIDs
     if self.Info == nil then return end
-    local seg_id = self.Info:find_child(mk.info.SegmentUUID)
-    if seg_id then seg_id = self:_bin2hex(seg_id.value) end
 
     local prev_id = self.Info:find_child(mk.info.PrevUUID)
     if prev_id then prev_id = self:_bin2hex(prev_id.value) end
@@ -310,7 +323,7 @@ function Matroska_Parser:hardlinking_get_uids()
     local next_id = self.Info:find_child(mk.info.NextUUID)
     if next_id then next_id = self:_bin2hex(next_id.value) end
 
-    return seg_id, prev_id, next_id
+    return self.seg_uuid, prev_id, next_id
 end
 
 
