@@ -276,6 +276,69 @@ function Matroska_Parser:parse_Info()
     end
 end
 
+-- to_String: generates a human readable string for an element
+local function get_elem_type(elem)
+    return getmetatable(elem.__index)
+end
+
+function Matroska_Parser:to_string(elem, verbose)
+    local result = ""
+
+    local function do_verbose(_e)
+        result = result .. " (data position: " .. _e.data_position
+            .. ", data size: " .. _e.data_size .. ")"
+    end
+
+    local function get_string(_elem, level)
+        local prefix = "|"
+        for i = 1, level do
+            prefix = prefix .. " "
+        end
+        prefix = prefix .. "+ "
+
+        if _elem:is_master() then
+            result = result .. prefix .. _elem:get_context().name
+            if verbose then do_verbose(_elem) end
+
+            for _, e in ipairs(elem.value) do
+                result = result .. "\n" .. get_string(e, level + 1)
+            end
+
+        elseif _elem:is_dummy() then
+            result = result .. prefix .. "Dummy: dummyID " .. _elem.dummy_id
+            if verbose then do_verbose(_elem) end
+
+        else -- all other types
+            result = result .. prefix .. _elem:get_context().name .. ": "
+
+            local e_type = getmetatable(_elem.__index) -- get the ebml type
+
+            if e_type == ebml.utf8 or e_type == ebml.string or e_type == ebml.integer
+            or e_type == ebml.uinteger or e_type == ebml.float then
+                result = result .. _elem.value
+
+            elseif e_type == ebml.date then
+                result = result .. _elem:get_utc()
+
+            else -- binary type
+                -- print hex value for small binary like UUIDs
+                if #_elem.value < 17 then
+                    result = result .. self:_bin2hex(_elem.value)
+
+                else -- more than 16 Bytes, TODO: Adler32
+                    result = result .. "binary data" -- for the moment
+                end
+            end
+
+            if verbose then do_verbose(_elem) end
+        end
+
+        return result
+    end
+
+    return get_string(elem, 0)
+end
+
 
 -- Matroska features -----------------------------------------------------------
 
