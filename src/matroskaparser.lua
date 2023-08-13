@@ -276,12 +276,9 @@ function Matroska_Parser:parse_Info()
     end
 end
 
--- to_String: generates a human readable string for an element
-local function get_elem_type(elem)
-    return getmetatable(elem.__index)
-end
-
-function Matroska_Parser:to_string(elem, verbose)
+-- elem_to_string: generates a human readable string for an element
+function Matroska_Parser:elem_to_string(elem, verbose)
+    if elem == nil then return "" end
     local result = ""
 
     local function do_verbose(_e)
@@ -297,19 +294,19 @@ function Matroska_Parser:to_string(elem, verbose)
         prefix = prefix .. "+ "
 
         if _elem:is_master() then
-            result = result .. prefix .. _elem:get_context().name
+            result = result .. "\n" .. prefix .. _elem:get_context().name
             if verbose then do_verbose(_elem) end
 
-            for _, e in ipairs(elem.value) do
-                result = result .. "\n" .. get_string(e, level + 1)
+            for _, e in ipairs(_elem.value) do
+                get_string(e, level + 1)
             end
 
         elseif _elem:is_dummy() then
-            result = result .. prefix .. "Dummy: dummyID " .. _elem.dummy_id
+            result = result .. "\n" .. prefix .. "Dummy: dummyID " .. _elem.dummy_id
             if verbose then do_verbose(_elem) end
 
         else -- all other types
-            result = result .. prefix .. _elem:get_context().name .. ": "
+            result = result .. "\n" .. prefix .. _elem:get_context().name .. ": "
 
             local e_type = getmetatable(_elem.__index) -- get the ebml type
 
@@ -321,7 +318,7 @@ function Matroska_Parser:to_string(elem, verbose)
                 result = result .. _elem:get_utc()
 
             else -- binary type
-                -- print hex value for small binary like UUIDs
+                -- print hex value for small binary data like UUIDs
                 if #_elem.value < 17 then
                     result = result .. self:_bin2hex(_elem.value)
 
@@ -332,11 +329,10 @@ function Matroska_Parser:to_string(elem, verbose)
 
             if verbose then do_verbose(_elem) end
         end
-
-        return result
     end
 
-    return get_string(elem, 0)
+    get_string(elem, 0)
+    return result
 end
 
 
