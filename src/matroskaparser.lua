@@ -178,7 +178,7 @@ function Matroska_Parser:_analyze()
         -- Info
         elseif id == mk.info.Info:get_context().id  then
             self.Info = elem
-            self:parse_Info()
+            self:_parse_Info()
 
         -- Chapters
         elseif id == mk.chapters.Chapters:get_context().id  then
@@ -228,7 +228,7 @@ function Matroska_Parser:_analyze()
 
     if not self.Info then
         self.Info = self:get_element_from_seekhead(mk.info.Info)
-        self:parse_Info()
+        self:_parse_Info()
     end
 
     if not self.Attachments then
@@ -266,7 +266,7 @@ function Matroska_Parser:_bin2hex(bin)
 end
 
 -- Parse Info (private)
-function Matroska_Parser:parse_Info()
+function Matroska_Parser:_parse_Info()
     if self.Info then
         self.Info:read_data(self.file) -- parse fully
         -- parse SegmentUUID
