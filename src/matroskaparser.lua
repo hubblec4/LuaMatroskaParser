@@ -9,6 +9,23 @@ local DOCTYPE_MATROSKA = "matroska"
 local DOCTYPE_WEBM = "webm"
 
 
+-- get_timestamp: returns a time in HH:MM:SS:NS format
+local function get_timestamp(ns_time)
+    if ns_time == 0 then return "00:00:00.000000000" end
+    local h, m, s, ns, rest
+    local minus = ""
+    if ns_time < 0 then
+        minus = "-"
+        ns_time = ns_time * (-1)
+    end
+    h = math.floor(ns_time / 3600000000000)
+    rest = ns_time - h * 3600000000000
+    m = math.floor(rest / 60000000000)
+    rest = rest - m * 60000000000
+    s = math.floor(rest / 1000000000)
+    ns = rest - s * 1000000000
+    return ("%s%02d:%02d:%02d.%09d"):format(minus, h, m, s, ns)
+end
 
 
 -- -----------------------------------------------------------------------------
@@ -282,6 +299,17 @@ function Matroska_Parser:_parse_Info()
     end
 end
 
+-- segment_ticks_2_matroska_ticks (private)
+function Matroska_Parser:_segment_ticks_2_matroska_ticks(segm_ticks, as_timestamp)
+    -- All timestamp values in Matroska are expressed in multiples of a tick. They are usually stored as integers.
+    -- formula: timestamp in nanoseconds = element value * TimestampScale -> element vaule = segm_ticks
+    -- Info\Duration is stored as a floating-point
+    if as_timestamp then
+        return get_timestamp(math.floor(self.timestamp_scale * segm_ticks))
+    end
+    return math.floor(self.timestamp_scale * segm_ticks)
+end
+
 -- elem_to_string: generates a human readable string for an element
 function Matroska_Parser:elem_to_string(elem, verbose)
     if elem == nil then return "" end
@@ -316,10 +344,61 @@ function Matroska_Parser:elem_to_string(elem, verbose)
 
             local e_type = getmetatable(_elem.__index) -- get the ebml type
 
-            if e_type == ebml.utf8 or e_type == ebml.string or e_type == ebml.integer
-            or e_type == ebml.uinteger or e_type == ebml.float then
+            -- string and utf8
+            if e_type == ebml.utf8 or e_type == ebml.string or e_type == ebml.integer then
                 result = result .. _elem.value
 
+            -- integer
+            elseif e_type == ebml.integer then
+                -- elements with Matroska Ticks
+                if _elem:is_class(mk.cluster.DiscardPadding) then
+                    result = result .. get_timestamp(_elem.value)
+
+                -- elements with Track Ticks --TODO: currently not fully supported
+                elseif _elem:is_class(mk.cluster.ReferenceBlock) then
+                    -- TrackTimestampScale is not taken into account for the moment -> default vaule is 1.0
+                    result = result .. self:_segment_ticks_2_matroska_ticks(_elem.value, true)
+                else
+                    result = result .. _elem.value
+                end
+
+
+            -- uinteger
+            elseif e_type == ebml.uinteger then
+                -- elements with Segment Ticks
+                if _elem:is_class(mk.cluster.Timestamp)
+                or _elem:is_class(mk.cues.CueDuration) then
+                    result = result .. self:_segment_ticks_2_matroska_ticks(_elem.value, true)
+
+                -- elements with Matroska Ticks
+                elseif _elem:is_class(mk.tracks.DefaultDuration)
+                or _elem:is_class(mk.tracks.DefaultDecodedFieldDuration)
+                or _elem:is_class(mk.tracks.SeekPreRoll)
+                or _elem:is_class(mk.tracks.CodecDelay)
+                or _elem:is_class(mk.chapters.ChapterTimeStart)
+                or _elem:is_class(mk.chapters.ChapterTimeEnd)
+                or _elem:is_class(mk.cues.CueTime)
+                or _elem:is_class(mk.cues.CueRefTime) then
+                    result = result .. get_timestamp(_elem.value)
+
+                -- elements with Track Ticks --TODO: currently not fully supported
+                elseif _elem:is_class(mk.cluster.BlockDuration) then
+                    -- TrackTimestampScale is not taken into account for the moment -> default vaule is 1.0
+                    result = result .. self:_segment_ticks_2_matroska_ticks(_elem.value, true)
+
+                else
+                    result = result .. _elem.value
+                end
+
+            -- float
+            elseif e_type == ebml.float then
+                if _elem:is_class(mk.info.Duration) then
+                    result = result .. self:_segment_ticks_2_matroska_ticks(_elem.value, true)
+                else
+                    result = result .. _elem.value
+                end
+
+            -- date
             elseif e_type == ebml.date then
                 result = result .. _elem:get_utc()
 
