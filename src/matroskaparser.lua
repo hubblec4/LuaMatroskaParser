@@ -45,6 +45,7 @@ local Matroska_Parser = {
     Tags = nil,
 
     -- useful element values
+    timestamp_scale = 1000000, -- the global timestamp scale
     seg_uuid = nil -- SegmentUUID as hex-string
 }
 
@@ -272,6 +273,11 @@ function Matroska_Parser:parse_Info()
         self.seg_uuid = self.Info:find_child(mk.info.SegmentUUID)
         if self.seg_uuid then
             self.seg_uuid = self:_bin2hex(self.seg_uuid.value)
+        end
+        -- parse TimestampScale
+        self.timestamp_scale = self.Info:get_child(mk.info.TimestampScale)
+        if self.timestamp_scale then
+            self.timestamp_scale = self.timestamp_scale.value
         end
     end
 end
