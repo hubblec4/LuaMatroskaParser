@@ -67,11 +67,11 @@ local Matroska_Parser = {
 }
 
 -- Matroska Parser constructor
-function Matroska_Parser:new(path, do_analyze)
+function Matroska_Parser:new(path, file, do_analyze)
     local elem = setmetatable({}, self)
     self.__index = self
     elem.path = path
-    elem.file = nil
+    elem.file = file
 
     -- Validate
     elem.is_valid, elem.err_msg = elem:_validate()
@@ -116,9 +116,11 @@ end
 -- Validate (private)
 function Matroska_Parser:_validate()
     -- open file
-    self.file = io.open(self.path, "rb")
     if not self.file then
-        return false, "file couldn't be open"
+        self.file = io.open(self.path, "rb")
+        if not self.file then
+            return false, "file couldn't be open"
+        end
     end
 
     -- check if an EBML and Segment element is present and a valid DocType is used
