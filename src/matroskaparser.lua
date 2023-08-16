@@ -27,6 +27,13 @@ local function get_timestamp(ns_time)
     return ("%s%02d:%02d:%02d.%09d"):format(minus, h, m, s, ns)
 end
 
+-- get_nanosecs: returns an integer in nano seconds
+local function get_nanosecs(timestamp) -- timestamp should be in HH:MM:SS:NS format
+    local h, m, s, ns = string.match(timestamp .. "00000000", "(%d+):([0-5]%d):([0-5]%d)%.(%d%d%d%d%d%d%d%d%d)")
+    if h == nil then return nil end
+    return (h * 3600 + m * 60 + s) * 100000000 + ns
+end
+
 
 -- -----------------------------------------------------------------------------
 -- Matroska Parser -------------------------------------------------------------
@@ -310,6 +317,39 @@ function Matroska_Parser:_segment_ticks_2_matroska_ticks(segm_ticks, as_timestam
         return get_timestamp(math.floor(self.timestamp_scale * segm_ticks))
     end
     return math.floor(self.timestamp_scale * segm_ticks)
+end
+
+-- find_mtx_stats_tag (private): try to find a MKVToolNix stats tag
+function Matroska_Parser:find_MTX_stats_tag(track)
+    if self.Tags == nil then return nil end
+    return self.Tags:find_Tag_byName(track, "_STATISTICS_TAGS")
+end
+
+-- video_duration: returns the duration of a video track in nanoseconds
+function Matroska_Parser:get_video_duration(v_track)
+    --[[ The Info\Duartion is a value which contains the longest duration of all tracks
+         therefore is this value not really useful
+         when MKVToolNix statistics tags are availible: there is a video duration with a millisec accuracy
+         to get this value is very easy and fast
+         without this stats tags we have to parse the Clusters to find the last video frame
+         the last video frame timestamp plus it's frame duration is the video duration 
+         ]]
+    local vid = v_track:get_child(mk.tracks.TrackUID).value
+
+    -- try first the MKVToolNix stats tags
+    local stats = self:find_MTX_stats_tag(v_track)
+    if stats then
+        local timestamp = stats:find_SimpleTag_byName("DURATION")
+        if timestamp then
+            timestamp = timestamp:get_string()
+            if timestamp then
+                timestamp = get_nanosecs(timestamp)
+                if timestamp then return timestamp end
+            end
+        end
+    end
+
+    -- TODO: use Clusters -> find a Cluster with the last frame for the track
 end
 
 -- elem_to_string: generates a human readable string for an element
