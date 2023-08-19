@@ -462,6 +462,113 @@ function Matroska_Parser:elem_to_string(elem, verbose)
     return result
 end
 
+-- get_edition_name: returns String with the name(s) of the given edition
+function  Matroska_Parser:get_edition_name(edition, language, all)
+    if edition == nil then return nil end
+    --[[ language: string, BCP47
+         all: boolean, all names of a language or all names if no language is set
+    ]]
+    local name_s = ""
+    local lng, i, name
+    local found_lang = false
+    local first_simple = nil
+
+    -- almost is the edition name stored in the Tags, the new EditionDisplay is not widly used
+    if self.Tags then
+        -- find the Tag with Name TITLE
+        local tag = self.Tags:find_Tag_byName(edition, "TITLE")
+        if tag then
+            -- loop SimpleTags's
+            local simple, idx = tag:find_child(mk.tags.SimpleTag)
+            while simple do
+                if simple:get_child(mk.tags.TagName).value == "TITLE" then
+                    -- save the first SimpleTag
+                    if first_simple == nil then first_simple = simple end
+
+                    -- check language
+                    if language ~= "" then
+                        found_lang = false
+                        -- check BCP47 first
+                        lng = simple:find_child(mk.tags.TagLanguageBCP47)
+                        if lng and lng.value == language then
+                            found_lang = true
+                        end
+                        -- check IS0639_3 language
+                        if not found_lang then
+                            found_lang = simple:get_child(mk.tags.TagLanguage).value == language
+                        end
+                    end
+
+                    -- get the name
+                    if found_lang or language == "" then
+                        if name_s == "" then
+                            name_s = simple:get_string()
+                        else
+                            name = simple:get_string()
+                            if name ~= "" then
+                                name_s = name_s .. " || " .. name
+                            end
+                        end
+                    end
+
+                    -- finish if a name was found, and not all names was requested
+                    if name_s ~= "" and all ~= true then return name_s end
+                end
+                simple, idx = tag:find_next_child(idx)
+            end
+        end
+    end
+
+    -- check EditionDisplay elements
+    local display, idx = edition:find_child(mk.chapters.EditionDisplay)
+    local first_display = display
+    while display do
+        if language ~= "" then
+            found_lang = false
+
+            -- check BCP47
+            lng, i = edition:find_child(mk.chapters.EditionLanguageIETF)
+            while lng do
+                if lng.value == language then
+                    found_lang = true
+                    break
+                end
+                lng, i = edition:find_next_child(i)
+            end
+        end
+
+        -- get the name    
+        if found_lang or language == "" then
+            if name_s == "" then
+                name_s = display:get_child(mk.chapters.EditionString).value
+            else
+                name = display:get_child(mk.chapters.EditionString).value
+                if name ~= "" then
+                    name_s = name_s .. " || " .. name
+                end
+            end
+        end
+
+        -- finish if a name was found, and not all names was requested
+        if name_s ~= "" and all ~= true then return name_s end
+        
+        display, idx = self:find_next_child(idx)
+    end
+
+    -- no name found, check "first"-elements
+    -- first SimpleTag
+    if first_simple then
+        name = first_simple:get_string()
+        if name ~= "" then return name end
+    end
+    -- first EditionDisplay
+    if first_display then
+        return first_display:get_child(mk.chapters.EditionString).value
+    end
+
+    return ""
+end
+
 
 -- Matroska features -----------------------------------------------------------
 
