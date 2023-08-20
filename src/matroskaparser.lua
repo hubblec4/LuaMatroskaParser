@@ -213,7 +213,7 @@ function Matroska_Parser:_analyze()
 
         -- Tracks
         elseif id == mk.tracks.Tracks:get_context().id  then
-            elem:skip_data(self.file) -- skip data, parse later
+            elem:read_data(self.file) -- parse fully
             self.Tracks = elem
 
         -- Attachments
@@ -272,6 +272,7 @@ function Matroska_Parser:_analyze()
 
     if not self.Tracks then
         self.Tracks = self:get_element_from_seekhead(mk.tracks.Tracks)
+        if self.Tracks then self.Tracks:read_data(self.file) end
     end
 
     if not self.Tags then
