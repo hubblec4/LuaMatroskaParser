@@ -335,7 +335,12 @@ function Matroska_Parser:get_video_duration(v_track)
          without this stats tags we have to parse the Clusters to find the last video frame
          the last video frame timestamp plus it's frame duration is the video duration 
          ]]
-    local vid = v_track:get_child(mk.tracks.TrackUID).value
+    if v_track == nil then
+        v_track = self:get_video(0) -- get first video
+    elseif type(v_track) == "number" then
+        v_track = self:get_video(v_track)
+    end
+    if v_track == nil then return nil end
 
     -- try first the MKVToolNix stats tags
     local stats = self:find_MTX_stats_tag(v_track)
@@ -351,6 +356,7 @@ function Matroska_Parser:get_video_duration(v_track)
     end
 
     -- TODO: use Clusters -> find a Cluster with the last frame for the track
+    --local vid = v_track:get_child(mk.tracks.TrackUID).value
 end
 
 -- elem_to_string: generates a human readable string for an element
