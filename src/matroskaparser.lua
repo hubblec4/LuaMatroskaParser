@@ -559,7 +559,7 @@ function  Matroska_Parser:get_edition_name(edition, language, all)
         -- finish if a name was found, and not all names was requested
         if name_s ~= "" and all ~= true then return name_s end
         
-        display, idx = self:find_next_child(idx)
+        display, idx = edition:find_next_child(idx)
     end
 
     -- no name found, check "first"-elements
