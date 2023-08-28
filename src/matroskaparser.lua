@@ -361,7 +361,7 @@ end
 
 -- elem_to_string: generates a human readable string for an element
 function Matroska_Parser:elem_to_string(elem, verbose)
-    if elem == nil then return "" end
+    if elem == nil or type(elem.is_master) ~= "function" then return "" end
     local result = ""
 
     local function do_verbose(_e)
