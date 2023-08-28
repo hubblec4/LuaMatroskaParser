@@ -302,10 +302,7 @@ function Matroska_Parser:_parse_Info()
             self.seg_uuid = self:_bin2hex(self.seg_uuid.value)
         end
         -- parse TimestampScale
-        self.timestamp_scale = self.Info:get_child(mk.info.TimestampScale)
-        if self.timestamp_scale then
-            self.timestamp_scale = self.timestamp_scale.value
-        end
+        self.timestamp_scale = self.Info:get_child(mk.info.TimestampScale).value
     end
 end
 
