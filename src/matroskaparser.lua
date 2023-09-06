@@ -333,7 +333,7 @@ function Matroska_Parser:get_video_duration(v_track)
          the last video frame timestamp plus it's frame duration is the video duration 
          ]]
     if v_track == nil then
-        v_track = self:get_video(0) -- get first video
+        v_track = self:get_video(1) -- get first video
     elseif type(v_track) == "number" then
         v_track = self:get_video(v_track)
     end
