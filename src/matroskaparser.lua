@@ -70,12 +70,14 @@ local Matroska_Parser = {
 
     -- useful element values
     timestamp_scale = 1000000, -- the global timestamp scale
-    seg_uuid = nil -- SegmentUUID as hex-string
+    seg_uuid = nil, -- SegmentUUID as hex-string
+    seg_duration = 0.0, -- Segment Duration from INFO/Duration element
 }
 
 -- Matroska Parser constructor
 function Matroska_Parser:new(path, file, do_analyze)
-    local elem = setmetatable({}, self)
+    local elem = {}
+    setmetatable(elem, self)
     self.__index = self
     elem.path = path
     elem.file = file
@@ -296,13 +298,21 @@ end
 function Matroska_Parser:_parse_Info()
     if self.Info then
         self.Info:read_data(self.file) -- parse fully
+
         -- parse SegmentUUID
         self.seg_uuid = self.Info:find_child(mk.info.SegmentUUID)
         if self.seg_uuid then
             self.seg_uuid = self:_bin2hex(self.seg_uuid.value)
         end
+
         -- parse TimestampScale
         self.timestamp_scale = self.Info:get_child(mk.info.TimestampScale).value
+        
+        -- parse Duration
+        self.seg_duration = self.Info:find_child(mk.info.Duration)
+        if self.seg_duration then
+            self.seg_duration = self:_segment_ticks_2_matroska_ticks(self.seg_duration.value)
+        end
     end
 end
 
