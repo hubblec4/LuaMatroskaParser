@@ -477,8 +477,12 @@ function Matroska_Parser:elem_to_string(elem, verbose)
 end
 
 -- get_edition_name: returns String with the name(s) of the given edition
-function  Matroska_Parser:get_edition_name(edition, language, all)
+function  Matroska_Parser:get_edition_name(edition, language, all, noFallback)
     if edition == nil then return nil end
+    if type(edition) == "number" then -- check edition is a number -> index
+        if not self.Chapters then return nil end
+        edition = self.Chapters:get_edition(edition)
+    end
     --[[ language: string, BCP47
          all: boolean, all names of a language or all names if no language is set
     ]]
@@ -569,6 +573,8 @@ function  Matroska_Parser:get_edition_name(edition, language, all)
         display, idx = edition:find_next_child(idx)
     end
 
+    if noFallback then return "" end
+    
     -- no name found, check "first"-elements
     -- first SimpleTag
     if first_simple then
