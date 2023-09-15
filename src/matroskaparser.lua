@@ -613,6 +613,45 @@ function Matroska_Parser:get_subtitle(idx)
     return nil
 end
 
+-- get_video_rotation: first returns a vaule from -180.0 to 180.0 or from 0 to 359 as integer
+-- second returns: boolean, if the vaule is a native Matroska value
+function Matroska_Parser:get_video_rotation(vid)
+    -- vid is a video track index, can be nil -> means first video track
+    -- Matroska has a native Element ProjectionPoseRoll (float): value range -180.0 to 180.0
+    -- The Tags ROTATE is a widly used non official feature: values (0) 90 180 270
+    -- ProjectionPoseRoll has a higher priority and Tags must be ignored
+    -- a return value of 0 means no rotation
+
+    local trk = self:get_video(vid) -- get the track entry
+    if not trk then return 0 end -- no video found
+
+    -- check ProjectionPoseRoll first
+    local video = trk:find_child(mk.tracks.Video) -- find the video element
+    if not video then return 0 end -- no video element found, should not happen
+
+    -- find ProjectionPoseRoll
+    local projection = video:find_child(mk.tracks.Projection)
+    if projection then -- projection element found
+        local poseroll = projection:find_child(mk.tracks.ProjectionPoseRoll)
+        if poseroll then -- ProjectionPoseRoll element found
+            return poseroll.value, true
+        end
+    end
+
+    -- use non official Tags ROTATE
+    if not self.Tags then return 0 end
+    local tag = self.Tags:find_Tag_byName(trk, "ROTATE")
+    if tag then
+        local simple = tag:find_SimpleTag_byName("ROTATE") -- is defintiv present
+        local val = tonumber(simple:get_string())
+        if val and val > 0 and val < 360 then
+            return val, false
+        end
+    end
+
+    -- no rotation found
+    return 0
+end
 
 -- Matroska features -----------------------------------------------------------
 

@@ -19,6 +19,15 @@ When Hard-Linking is used there is another method to get the needed `UUID's` fro
 function Matroska_Parser:hardlinking_get_uids()
 ```
 
+### Video rotation
+
+Matroska supports multiple rotation options and some players supports this.
+There is also a non official method with the Matroska Tags which is also supported by some players.
+
+```lua
+function Matroska_Parser:get_video_rotation(vid)
+```
+
 ### MKVToolNix Statistics Tags
 
 MKVToolNix is not part of Matroska but it is the most popular tool to work with Matroska files.
