@@ -590,25 +590,25 @@ function  Matroska_Parser:get_edition_name(edition, language, all, noFallback)
 end
 
 -- get_video: returns a video TrackEntry element
-function Matroska_Parser:get_video(idx)
+function Matroska_Parser:get_video(idx, uid)
     if self.Tracks then
-        return self.Tracks:get_track(idx, mk.tracks.TrackType_enum.video)
+        return self.Tracks:get_track(idx, uid, mk.tracks.TrackType_enum.video)
     end
     return nil
 end
 
 -- get_audio: returns a audio TrackEntry element
-function Matroska_Parser:get_audio(idx)
+function Matroska_Parser:get_audio(idx, uid)
     if self.Tracks then
-        return self.Tracks:get_track(idx, mk.tracks.TrackType_enum.audio)
+        return self.Tracks:get_track(idx, uid, mk.tracks.TrackType_enum.audio)
     end
     return nil
 end
 
 -- get_subtitle: returns a subtitle TrackEntry element
-function Matroska_Parser:get_subtitle(idx)
+function Matroska_Parser:get_subtitle(idx, uid)
     if self.Tracks then
-        return self.Tracks:get_track(idx, mk.tracks.TrackType_enum.subtitle)
+        return self.Tracks:get_track(idx, uid, mk.tracks.TrackType_enum.subtitle)
     end
     return nil
 end
