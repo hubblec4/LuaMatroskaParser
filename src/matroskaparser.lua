@@ -10,21 +10,26 @@ local DOCTYPE_WEBM = "webm"
 
 
 -- get_timestamp: returns a time in HH:MM:SS:NS format
-local function get_timestamp(ns_time)
-    if ns_time == 0 then return "00:00:00.000000000" end
-    local h, m, s, ns, rest
-    local minus = ""
+local function get_timestamp(ns_time, ns_len)
+	if ns_len == nil then ns_len = 9 end -- HH:MM:SS.NS format
+	local minus = ""
     if ns_time < 0 then
         minus = "-"
         ns_time = ns_time * (-1)
     end
-    h = math.floor(ns_time / 3600000000000)
-    rest = ns_time - h * 3600000000000
-    m = math.floor(rest / 60000000000)
-    rest = rest - m * 60000000000
-    s = math.floor(rest / 1000000000)
-    ns = rest - s * 1000000000
-    return ("%s%02d:%02d:%02d.%09d"):format(minus, h, m, s, ns)
+	
+	local seconds = ns_time / 1e9
+	local h = math.floor(seconds / 3600)
+	local m = math.floor((seconds % 3600) / 60)
+	local s = seconds % 60
+	
+	if ns_len == 0 then -- HH:MM:SS format
+		return string.format("%s%02d:%02d:%02d", minus, h, m, s)
+	else
+		local ns = ("%09d"):format(ns_time % 1e9)
+		ns = ns:sub(1, ns_len)
+		return ("%s%02d:%02d:%02d.%s"):format(minus, h, m, s, ns)
+	end
 end
 
 -- get_nanosecs: returns an integer in nano seconds
