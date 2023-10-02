@@ -712,6 +712,7 @@ end
 
 -- Export module ---------------------------------------------------------------
 local module = {
-    Matroska_Parser = Matroska_Parser
+    Matroska_Parser = Matroska_Parser,
+    get_timestamp = get_timestamp
 }
 return module
