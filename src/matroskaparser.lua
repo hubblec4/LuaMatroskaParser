@@ -658,6 +658,16 @@ function Matroska_Parser:get_video_rotation(vid)
     return 0
 end
 
+-- get_title: returns String, if the Title element is not present an empty string returns
+function Matroska_Parser:get_title()
+    if self.Info == nil then return "" end
+    local t = self.Info:find_child(mk.info.Title)
+    if t == nil then return "" end
+
+    return t.value
+end
+
+
 -- Matroska features -----------------------------------------------------------
 
 -- Ordered chapters are used
