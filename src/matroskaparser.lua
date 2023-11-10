@@ -33,7 +33,7 @@ local function get_timestamp(ns_time, ns_len)
 end
 
 -- get_nanosecs: returns an integer in nano seconds
-local function get_nanosecs(timestamp) -- timestamp should be in HH:MM:SS:NS format
+local function get_nanosecs(timestamp) -- timestamp should be in HH:MM:SS.NS format
     local h, m, s, ns = string.match(timestamp .. "00000000", "(%d+):([0-5]%d):([0-5]%d)%.(%d%d%d%d%d%d%d%d%d)")
     if h == nil then return nil end
     return (h * 3600 + m * 60 + s) * 1000000000 + ns
